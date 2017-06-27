@@ -4,8 +4,10 @@ class Memory:
 	def __init__(self, page_size, n_pages):
 		self.page_size = page_size
 		self.n_pages = n_pages
+		self.size = n_pages*page_size
 		self.pagelist = []
 		self.allocated = 0
+		self.mem_allocated = 0
 		self.last_removed = None
 		for i in range(n_pages):
 			self.pagelist.append(None)
@@ -15,10 +17,13 @@ class Memory:
 			if p is None:
 				self.pagelist[i] = page
 				self.allocated = self.allocated+1
+				self.mem_allocated = self.mem_allocated+page[1].stored
 				return i
 		return None
 
 	def allocate_page(self, time, process, size, page_id=0):
+		if size>(self.size-self.mem_allocated):
+			return None
 		p_size = self.page_size
 		if self.allocated == self.n_pages:
 			p = Page(process, p_size, size)
@@ -38,6 +43,8 @@ class Memory:
 			pid = pid + 1
 			if size>0:
 				aux = self.allocate_page(time, process, size, page_id=pid)
+				if aux is None:
+					return aux
 				pages.extend(aux)
 		elif size!=0:
 			p = Page(process, p_size, size)
@@ -46,6 +53,7 @@ class Memory:
 				idx = self.on_new_page((time,p, pid))
 				if idx is None: return None
 				pages.append(idx)
+				
 		return pages
 	
 	def allocate_memory(self, process, size, time):
@@ -63,41 +71,50 @@ class Memory:
 	
 	def get_page_by_method(self, method='lru'):
 		if method=='lru':
-			older = self.pagelist[0][0]
-			idx = 0
+			for i,page in enumerate(self.pagelist):
+				if page is not None:
+					older = page[0]
+					idx = i
+					break
 			for i,n in enumerate(self.pagelist):
-				if n[0] < older:
+				if n is not None and n[0] < older:
 					older = n[0]
 					idx = i
-			p = self.pagelist[idx]
-			self.pagelist[idx] = None
-			self.allocated = self.allocated - 1
+			p = self.remove_page(idx)
 			return p[1], p[2]
 		elif method=='sequential':
 			if self.last_removed is None:
-				p = self.pagelist[0]
-				self.pagelist[0] = None
-				self.allocated = self.allocated - 1
+				for i,n in enumerate(self.pagelist):
+					if n is not None:
+						p = self.remove_page(i)
+						break
 				return p[1], p[2]
 			else:
 				n = (self.last_removed+1)%n_pages
 				self.last_removed = n
-				p = self.pagelist[n]
-				self.pagelist[n] = None
-				self.allocated = self.allocated - 1
+				p = self.remove_page(n)
 				return p[1], p[2]
 		else:
 			return None
+	def remove_page(self, idx):
+		p = self.pagelist[idx]
+		self.pagelist[idx] = None
+		self.allocated = self.allocated - 1
+		self.mem_allocated = self.mem_allocated - p[1].stored
+		return p
 
 	def get_page_by_address(self, process, page_id):
 		for i,p in enumerate(self.pagelist):
 			if p is not None  and p[1].process == process and p[2] == page_id:
 				self.pagelist[i] = None
 				self.allocated = self.allocated - 1
+				self.mem_allocated = self.mem_allocated - p[1].stored
 				return p[1], p[2]
 	
 	def access_address(self, process, time, page, pid):
 		p = self.pagelist[page]
+		if p is None:
+			return None
 		if p[1].process == process and p[2] == pid:
 			p = (time, p[1])
 			return 1
@@ -105,6 +122,7 @@ class Memory:
 			return None
 
 	def print_status(self):
+		print('Size: {}. Allocated: {}'.format(self.size, self.mem_allocated))
 		result = []
 		for p in self.pagelist:
 			if p is not None:

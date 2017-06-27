@@ -1,5 +1,5 @@
 0
-lru
+sequential
 8
 64
 16
