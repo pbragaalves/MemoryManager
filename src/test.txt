@@ -3,19 +3,19 @@ sequential
 8
 64
 16
-C p1 16 <— aloca 2 páginas para p1 - endereços de 0 .. 15 - físico 0 .. 15 - páginas 0 e 1
-C p2 18 <— aloca 3 páginas para p2 - endereços de 0 .. 17 - físico 16 .. 33 - páginas 2, 3 e 4 
-C p3 10 <— aloca 2 páginas para p3 - endereços de 0 .. 9  - físico 40 .. 49 - páginas 5 e 6 
-A p1 14 <— acessa endereço 14 do p1 - página 2
-A p1 20 <— erro de acesso a página - só menciona e continua em frente 
-A p2 17 <— acessa o endereço 17 do p2 - página 3
-A p3 10 <— erro de acesso a página 
-M p1 8  <— aloca mais uma página para o p1 - endereço físico 56 .. 63 - página 7
-A p1 20 <— acessa o endereço 20 do p1
-M p3 5  <— aloca mais memória, mas não precisa mais páginas pois tem espaço na página 6 
-M p2 8  <— neste momento acontece page fault - sai a página 0 que está com o p1após o page fault
-A p1 1  <— pált
-A p2 20  <— acessa endereço 20 de p2 - página 3 de p1
+C p1 16
+C p2 18
+C p3 10
+A p1 14
+A p1 20
+A p2 17
+A p3 10
+M p1 8
+A p1 20
+M p3 5
+M p2 8
+A p1 1
+A p2 20
 A p1 5
 A p1 17
 A p1 20
@@ -27,7 +27,7 @@ A p3 0
 A p3 12
 A p1 6
 A p1 18
-A p1 8 lo LRU a página que deve sair é a página 0 de p2
-M p2 10  <— - pelo LRU deve ser a página 1 de p2
+A p1 8
+M p2 10
 A p2 20
-M p1 10  <— imprimir mensagem do tipo: “não tem mais memória”
+M p1 10
